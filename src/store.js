@@ -5,8 +5,12 @@ export const useStore = create((set) => ({
   speed: 1,
   distortion: 0.5,
   shape: 'knot', // 'knot', 'sphere', 'gem'
+  bloomStrength: 0,
+  glitchActive: false,
   setColor: (color) => set({ color }),
   setSpeed: (speed) => set({ speed }),
   setDistortion: (distortion) => set({ distortion }),
   setShape: (shape) => set({ shape }),
+  setBloomStrength: (bloomStrength) => set({ bloomStrength }),
+  setGlitchActive: (glitchActive) => set({ glitchActive }),
 }))
