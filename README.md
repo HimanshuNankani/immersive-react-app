@@ -1,5 +1,7 @@
 # Immerse React App
 
+**Live Demo:** [https://fidget-controller.vercel.app/](https://fidget-controller.vercel.app/)
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 # Digital Toy Walkthrough

@@ -5,14 +5,16 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import { EffectComposer, Bloom, Glitch, Noise } from '@react-three/postprocessing'
 import { useStore } from '../store'
+import AudioManager from './AudioManager'
 
 /**
  * GeometricShape Component
  * Represents a complex 3D shape with a glass-like material.
  */
-const GeometricShape = () => {
+const GeometricShape = ({ analyzerRef }) => {
     const meshRef = useRef(null)
     const { speed, distortion, color, shape } = useStore()
+    const matRef = useRef()
 
     // Rotate the object continuously AND respond to mouse movement
     useFrame((state, delta) => {
@@ -24,6 +26,24 @@ const GeometricShape = () => {
             // Mouse interact
             meshRef.current.rotation.x += (state.pointer.y * delta * 0.5);
             meshRef.current.rotation.y += (state.pointer.x * delta * 0.5);
+
+            // Audio Reactivity
+            if (analyzerRef.current) {
+                const freq = analyzerRef.current.getFrequency()
+                const highFreq = analyzerRef.current.getHighFrequency()
+
+                // Pulse Scale (Base scale 1 + beat)
+                // Smoothly significantly roughly 0 -> 255. map to 1 -> 1.5
+                const scale = 1 + (freq / 255) * 0.8 /* Boosted from 0.4 */
+                meshRef.current.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.2) // Smooth transition
+
+                // Glitch Distortion (Base distortion + highs)
+                if (matRef.current) {
+                    // Start with base distortion from store
+                    const targetDistortion = distortion + (highFreq / 255) * 2.0
+                    matRef.current.distortion = THREE.MathUtils.lerp(matRef.current.distortion, targetDistortion, 0.1)
+                }
+            }
         }
     })
 
@@ -45,17 +65,19 @@ const GeometricShape = () => {
                 {shape === 'knot' && <torusKnotGeometry args={[1, 0.3, 128, 32]} />}
                 {shape === 'sphere' && <sphereGeometry args={[1.5, 64, 64]} />}
                 {shape === 'gem' && <icosahedronGeometry args={[1.8, 0]} />}
+                {shape === 'twist' && <torusGeometry args={[1.2, 0.4, 32, 100]} />}
                 <MeshTransmissionMaterial
+                    ref={matRef}
                     backside
                     backsideThickness={1}
-                    thickness={6.0} /* Very thick glass */
-                    chromaticAberration={3.0} /* Aggressive prism separation */
-                    anisotropy={1.0}
+                    thickness={0.5} /* Reduced thickness for clearer shape */
+                    chromaticAberration={0.2} /* Reduced CA to see color better */
+                    anisotropy={0.5}
                     distortion={distortion}
-                    distortionScale={1.0} /* Tighter distortion pattern */
-                    temporalDistortion={0.5} /* Faster distortion movement */
+                    distortionScale={0.5} /* Larger distortion waves */
+                    temporalDistortion={0.5}
                     color={color}
-                    resolution={1024} /* Sharper refraction */
+                    resolution={1024}
                 />
             </mesh>
         </Float>
@@ -67,7 +89,8 @@ const GeometricShape = () => {
  * Sets up the 3D environment including lighting and camera.
  */
 const HeroScene = () => {
-    const { bloomStrength, glitchActive } = useStore()
+    const { bloomStrength, glitchActive, audioUrl, isMusicPlaying } = useStore()
+    const analyzerRef = useRef()
 
     return (
         <div className="canvas-container">
@@ -76,11 +99,19 @@ const HeroScene = () => {
                 gl={{ antialias: true, alpha: true }}
                 dpr={[1, 2]} // Handle high-DPI screens
             >
-                {/*
-                   Environment: Provides realistic reflection data (IBL).
-                   'warehouse' offers high contrast for better glass refraction.
+                <AudioManager
+                    ref={analyzerRef}
+                    url={audioUrl}
+                    playing={isMusicPlaying}
+                />
+
+                {/* 
+                    Restoring Environment with 'studio' preset.
+                    'studio' provides soft, neutral lighting ideal for showcasing material properties
+                    without distracting background reflections.
                 */}
-                <Environment preset="warehouse" />
+                <Environment preset="studio" />
+                <color attach="background" args={['#000']} />
 
                 {/*
            Lighting Setup
@@ -90,7 +121,7 @@ const HeroScene = () => {
                 <ambientLight intensity={0.5} />
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
 
-                <GeometricShape />
+                <GeometricShape analyzerRef={analyzerRef} />
 
                 <OrbitControls enableZoom={false} enablePan={false} />
 
