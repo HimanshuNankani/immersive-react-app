@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Float, OrbitControls, MeshTransmissionMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 import gsap from 'gsap'
+import { EffectComposer, Bloom, Glitch, Noise } from '@react-three/postprocessing'
 import { useStore } from '../store'
 
 /**
@@ -47,13 +48,14 @@ const GeometricShape = () => {
                 <MeshTransmissionMaterial
                     backside
                     backsideThickness={1}
-                    thickness={0.5}
-                    chromaticAberration={0.2} /* Increased for spectral look */
-                    anisotropy={0.3}
-                    distortion={distortion} /* Controlled by store */
-                    distortionScale={0.5}
-                    temporalDistortion={0.2}
-                    color={color} /* Controlled by store */
+                    thickness={6.0} /* Very thick glass */
+                    chromaticAberration={3.0} /* Aggressive prism separation */
+                    anisotropy={1.0}
+                    distortion={distortion}
+                    distortionScale={1.0} /* Tighter distortion pattern */
+                    temporalDistortion={0.5} /* Faster distortion movement */
+                    color={color}
+                    resolution={1024} /* Sharper refraction */
                 />
             </mesh>
         </Float>
@@ -65,6 +67,8 @@ const GeometricShape = () => {
  * Sets up the 3D environment including lighting and camera.
  */
 const HeroScene = () => {
+    const { bloomStrength, glitchActive } = useStore()
+
     return (
         <div className="canvas-container">
             <Canvas
@@ -89,6 +93,19 @@ const HeroScene = () => {
                 <GeometricShape />
 
                 <OrbitControls enableZoom={false} enablePan={false} />
+
+                <EffectComposer>
+                    <Bloom
+                        luminanceThreshold={0}
+                        luminanceSmoothing={0.9}
+                        intensity={bloomStrength}
+                    />
+                    <Glitch
+                        active={glitchActive}
+                        ratio={0.85}
+                    />
+                    <Noise opacity={0.02} />
+                </EffectComposer>
             </Canvas>
         </div>
     )

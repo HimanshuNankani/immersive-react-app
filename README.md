@@ -18,6 +18,9 @@ You now have a fully interactive 3D playground!
 2.  **Distortion**: Change how much the glass warps the background lights.
 3.  **Color**: Click the color dots to instantly retint the glass object.
 4.  **Shape**: Toggle between different geometries (Knot, Sphere, Gem).
+5.  **VFX**: 
+    - **Bloom**: Drag the slider to make the object flow.
+    - **Glitch**: Click "Activate Glitch" to distort the scene.
 
 ---
 
