@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Float, OrbitControls, MeshTransmissionMaterial } from '@react-three/drei'
 import * as THREE from 'three'
@@ -15,6 +15,15 @@ const GeometricShape = ({ analyzerRef }) => {
     const meshRef = useRef(null)
     const { speed, distortion, color, shape } = useStore()
     const matRef = useRef()
+
+    // Mobile Detection
+    const [isMobile, setIsMobile] = useState(false)
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     // Rotate the object continuously AND respond to mouse movement
     useFrame((state, delta) => {
@@ -60,24 +69,25 @@ const GeometricShape = ({ analyzerRef }) => {
     }, [])
 
     return (
-        <Float floatIntensity={2} speed={2} rotationIntensity={1}>
+        <Float floatIntensity={isMobile ? 1 : 2} speed={isMobile ? 1.5 : 2} rotationIntensity={isMobile ? 0.5 : 1}>
             <mesh ref={meshRef}>
-                {shape === 'knot' && <torusKnotGeometry args={[1, 0.3, 128, 32]} />}
-                {shape === 'sphere' && <sphereGeometry args={[1.5, 64, 64]} />}
+                {shape === 'knot' && <torusKnotGeometry args={isMobile ? [1, 0.3, 64, 16] : [1, 0.3, 128, 32]} />}
+                {shape === 'sphere' && <sphereGeometry args={isMobile ? [1.5, 32, 32] : [1.5, 64, 64]} />}
                 {shape === 'gem' && <icosahedronGeometry args={[1.8, 0]} />}
-                {shape === 'twist' && <torusGeometry args={[1.2, 0.4, 32, 100]} />}
+                {shape === 'twist' && <torusGeometry args={isMobile ? [1.2, 0.4, 32, 48] : [1.2, 0.4, 32, 100]} />}
                 <MeshTransmissionMaterial
                     ref={matRef}
                     backside
                     backsideThickness={1}
                     thickness={0.5} /* Reduced thickness for clearer shape */
                     chromaticAberration={0.2} /* Reduced CA to see color better */
-                    anisotropy={0.5}
+                    anisotropy={isMobile ? 0.1 : 0.5}
                     distortion={distortion}
                     distortionScale={0.5} /* Larger distortion waves */
                     temporalDistortion={0.5}
                     color={color}
-                    resolution={1024}
+                    resolution={isMobile ? 512 : 1024}
+                    samples={isMobile ? 3 : 6}
                 />
             </mesh>
         </Float>
@@ -92,12 +102,20 @@ const HeroScene = () => {
     const { bloomStrength, glitchActive, audioUrl, isMusicPlaying } = useStore()
     const analyzerRef = useRef()
 
+    const [isMobile, setIsMobile] = useState(false)
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
+
     return (
         <div className="canvas-container">
             <Canvas
                 camera={{ position: [0, 0, 6], fov: 45 }}
                 gl={{ antialias: true, alpha: true }}
-                dpr={[1, 2]} // Handle high-DPI screens
+                dpr={isMobile ? [1, 1] : [1, 2]} // Handle high-DPI screens
             >
                 <AudioManager
                     ref={analyzerRef}

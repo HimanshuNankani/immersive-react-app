@@ -208,16 +208,17 @@ const Overlay = () => {
             <style>{`
                 /* Toggle Button Defaults (Desktop) */
                 .toggle-btn {
-                    position: absolute;
+                    position: fixed;
                     top: 2rem;
                     left: 2rem;
-                    z-index: 10;
+                    z-index: 200; /* Increased z-index to ensure visibility */
                     padding: 0.8rem 1.2rem;
                     background: rgba(255,255,255,0.1);
                     backdrop-filter: blur(10px);
                     border: 1px solid rgba(255,255,255,0.2);
                     border-radius: 30px;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    transition: all 0.3s ease;
                 }
 
                 .control-panel {
@@ -289,7 +290,7 @@ const Overlay = () => {
                     /* Reposition Toggle Button to Bottom Right */
                     .toggle-btn {
                         top: auto;
-                        bottom: 2rem;
+                        bottom: max(2rem, env(safe-area-inset-bottom) + 20px);
                         left: 2rem;
                         right: auto;
                         padding: 0.6rem 1rem; /* Smaller padding */
